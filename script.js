@@ -4,45 +4,88 @@ const CORRECT_PASSWORD = "OSISJHS24BANDUNG";
 // Data absensi disimpan di localStorage
 let absensiData = JSON.parse(localStorage.getItem('absensiData')) || [];
 
-// Fungsi untuk mengecek password
+// Fungsi untuk mengecek password - FIXED VERSION
 function checkPassword() {
-    const passwordInput = document.getElementById('password').value;
+    console.log('checkPassword function called'); // Debug log
+    const passwordInput = document.getElementById('password');
     const errorElement = document.getElementById('passwordError');
     
-    if (passwordInput === CORRECT_PASSWORD) {
+    if (!passwordInput) {
+        console.error('Password input not found!');
+        return;
+    }
+    
+    const passwordValue = passwordInput.value;
+    console.log('Password entered:', passwordValue); // Debug log
+    
+    if (passwordValue === CORRECT_PASSWORD) {
+        console.log('Password correct!'); // Debug log
         // Password benar, tampilkan aplikasi utama
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         localStorage.setItem('isLoggedIn', 'true');
+        tampilkanNotifikasi('Login berhasil!');
     } else {
+        console.log('Password incorrect!'); // Debug log
         // Password salah, tampilkan pesan error
         errorElement.textContent = 'Password salah! Mau passwordnya? Tanya pemiliknya!';
-        document.getElementById('password').value = '';
-        document.getElementById('password').focus();
+        passwordInput.value = '';
+        passwordInput.focus();
         
         // Tambah efek shake pada input
-        document.getElementById('password').classList.add('shake');
+        passwordInput.classList.add('shake');
         setTimeout(() => {
-            document.getElementById('password').classList.remove('shake');
+            passwordInput.classList.remove('shake');
         }, 500);
+    }
+}
+
+// Event listener yang lebih robust untuk password
+function setupPasswordListeners() {
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.querySelector('.btn-primary');
+    
+    console.log('Setting up password listeners...'); // Debug log
+    
+    if (passwordInput) {
+        // Enter key listener
+        passwordInput.addEventListener('keypress', function(e) {
+            console.log('Key pressed:', e.key); // Debug log
+            if (e.key === 'Enter') {
+                console.log('Enter key pressed, calling checkPassword'); // Debug log
+                checkPassword();
+            }
+        });
+        
+        // Pastikan input bisa difocus
+        passwordInput.focus();
+    } else {
+        console.error('Password input element not found!');
+    }
+    
+    if (loginBtn) {
+        // Click listener untuk tombol login
+        loginBtn.addEventListener('click', function(e) {
+            console.log('Login button clicked'); // Debug log
+            e.preventDefault();
+            checkPassword();
+        });
+    } else {
+        console.error('Login button not found!');
     }
 }
 
 // Fungsi untuk auto login jika sudah login sebelumnya
 function checkAutoLogin() {
     const isLoggedIn = localStorage.getItem('isLoggedIn');
+    console.log('Auto login check:', isLoggedIn); // Debug log
+    
     if (isLoggedIn === 'true') {
         document.getElementById('loginScreen').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
+        console.log('Auto login successful'); // Debug log
     }
 }
-
-// Event listener untuk enter key pada input password
-document.getElementById('password').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        checkPassword();
-    }
-});
 
 // Fungsi untuk update pilihan kelas berdasarkan tingkat
 function updateKelas() {
@@ -76,14 +119,22 @@ function updateWaktu() {
         minute: '2-digit', 
         second: '2-digit'
     };
-    document.getElementById('currentTime').textContent = 
-        `Waktu Sekarang: ${now.toLocaleDateString('id-ID', options)}`;
+    
+    const currentTimeElement = document.getElementById('currentTime');
+    if (currentTimeElement) {
+        currentTimeElement.textContent = 
+            `Waktu Sekarang: ${now.toLocaleDateString('id-ID', options)}`;
+    }
 }
 
 // Cek status keterlambatan
 function cekStatus() {
     const now = new Date();
-    const batasWaktu = document.getElementById('batasWaktu').value;
+    const batasWaktuInput = document.getElementById('batasWaktu');
+    
+    if (!batasWaktuInput) return 'Tepat Waktu';
+    
+    const batasWaktu = batasWaktuInput.value;
     
     // Buat objek Date untuk batas waktu hari ini
     const [jam, menit] = batasWaktu.split(':');
@@ -105,16 +156,21 @@ function updateStatistik() {
     const tepat = dataHariIni.filter(item => item.status === 'Tepat Waktu').length;
     const telat = dataHariIni.filter(item => item.status === 'Telat').length;
     
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statTepat').textContent = tepat;
-    document.getElementById('statTelat').textContent = telat;
+    // Update elements dengan pengecekan null
+    const statTotal = document.getElementById('statTotal');
+    const statTepat = document.getElementById('statTepat');
+    const statTelat = document.getElementById('statTelat');
+    
+    if (statTotal) statTotal.textContent = total;
+    if (statTepat) statTepat.textContent = tepat;
+    if (statTelat) statTelat.textContent = telat;
 }
 
 // Simpan absensi
 function simpanAbsensi() {
-    const nama = document.getElementById('nama').value.trim();
-    const tingkat = document.getElementById('tingkat').value;
-    const kelas = document.getElementById('kelas').value;
+    const nama = document.getElementById('nama')?.value.trim();
+    const tingkat = document.getElementById('tingkat')?.value;
+    const kelas = document.getElementById('kelas')?.value;
     
     if (!nama || !tingkat || !kelas) {
         tampilkanNotifikasi('❌ Harap isi semua data!', 'error');
@@ -139,24 +195,31 @@ function simpanAbsensi() {
     
     // Tampilkan status
     const statusElement = document.getElementById('statusInfo');
-    statusElement.textContent = `Siswa ${nama} - Status: ${status}`;
-    statusElement.className = `status-indicator ${status === 'Telat' ? 'status-telat' : 'status-tepat'}`;
+    if (statusElement) {
+        statusElement.textContent = `Siswa ${nama} - Status: ${status}`;
+        statusElement.className = `status-indicator ${status === 'Telat' ? 'status-telat' : 'status-tepat'}`;
+    }
     
     // Reset form
     document.getElementById('nama').value = '';
     document.getElementById('tingkat').value = '';
-    document.getElementById('kelas').innerHTML = '<option value="">Pilih Tingkat terlebih dahulu</option>';
+    const kelasSelect = document.getElementById('kelas');
+    if (kelasSelect) {
+        kelasSelect.innerHTML = '<option value="">Pilih Tingkat terlebih dahulu</option>';
+    }
     
     // Update tabel dan statistik
     tampilkanData();
     updateStatistik();
     
-    tampilkanNotifikasi(`Absensi ${nama} berhasil disimpan!`);
+    tampilkanNotifikasi(`✅ Absensi ${nama} berhasil disimpan!`);
 }
 
 // Tampilkan data di tabel
 function tampilkanData() {
     const tbody = document.getElementById('tabelAbsensi');
+    if (!tbody) return;
+    
     tbody.innerHTML = '';
     
     // Urutkan berdasarkan waktu terbaru
@@ -169,7 +232,7 @@ function tampilkanData() {
             <td>${item.kelas}</td>
             <td>${item.waktu}</td>
             <td style="color: ${item.status === 'Telat' ? '#DC2626' : '#059669'}; font-weight: bold;">
-                ${item.status === 'Telat' ? '' : ''} ${item.status}
+                ${item.status === 'Telat' ? '🔴' : '🟢'} ${item.status}
             </td>
         `;
         tbody.appendChild(row);
@@ -183,8 +246,9 @@ function resetData() {
         localStorage.removeItem('absensiData');
         tampilkanData();
         updateStatistik();
-        document.getElementById('statusInfo').textContent = '';
-        tampilkanNotifikasi(' Semua data telah dihapus!');
+        const statusInfo = document.getElementById('statusInfo');
+        if (statusInfo) statusInfo.textContent = '';
+        tampilkanNotifikasi('🗑️ Semua data telah dihapus!');
     }
 }
 
@@ -194,7 +258,7 @@ function formatData() {
         return "Tidak ada data absensi.";
     }
     
-    let teks = "Siap ka/teh izin kirim list yang telat: tnggl/bln/thn\n\n";
+    let teks = "Siap ka/teh izin mengirim list yang telat: (Tnggl/Bln/Thn)\n\n";
     
     // Kelompokkan data berdasarkan kelas
     const dataPerKelas = {};
@@ -222,9 +286,10 @@ function formatData() {
     const totalTepat = absensiData.filter(item => item.status === 'Tepat Waktu').length;
     
     teks += `📈 STATISTIK:\n`;
-    teks += `: ${totalTepat} siswa\n`;
-    teks += `: ${totalTelat} siswa\n`;
+    teks += `Tepat Waktu: ${totalTepat} siswa\n`;
+    teks += `Terlambat: ${totalTelat} siswa\n`;
     teks += `📊 Total: ${absensiData.length} siswa\n\n`;
+    teks += `*Data diambil pada: ${new Date().toLocaleString('id-ID')}*`;
     
     return teks;
 }
@@ -265,6 +330,8 @@ function kirimWhatsApp() {
 // Tampilkan notifikasi
 function tampilkanNotifikasi(pesan, tipe = 'success') {
     const notifikasi = document.getElementById('notification');
+    if (!notifikasi) return;
+    
     notifikasi.textContent = pesan;
     
     // Warna berdasarkan tipe
@@ -281,10 +348,15 @@ function tampilkanNotifikasi(pesan, tipe = 'success') {
     }, 3000);
 }
 
-// Inisialisasi
+// Inisialisasi yang lebih robust
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Initializing app...'); // Debug log
+    
     // Cek auto login terlebih dahulu
     checkAutoLogin();
+    
+    // Setup password listeners
+    setupPasswordListeners();
     
     updateWaktu();
     setInterval(updateWaktu, 1000);
@@ -292,14 +364,12 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStatistik();
     
     // Set batas waktu default ke 07:00
-    document.getElementById('batasWaktu').value = '07:00';
-    
-    // Auto-focus ke input nama (hanya jika sudah login)
-    if (localStorage.getItem('isLoggedIn') === 'true') {
-        document.getElementById('nama').focus();
-    } else {
-        document.getElementById('password').focus();
+    const batasWaktuInput = document.getElementById('batasWaktu');
+    if (batasWaktuInput) {
+        batasWaktuInput.value = '07:00';
     }
+    
+    console.log('App initialization complete'); // Debug log
 });
 
 // Tambahkan style untuk efek shake
@@ -314,5 +384,23 @@ style.textContent = `
         25% { transform: translateX(-5px); }
         75% { transform: translateX(5px); }
     }
+    
+    /* Pastikan elemen login visible */
+    .login-container {
+        display: flex !important;
+    }
+    
+    .hidden {
+        display: none !important;
+    }
 `;
 document.head.appendChild(style);
+
+// Fallback: Jika semua gagal, coba setup ulang setelah 1 detik
+setTimeout(() => {
+    if (document.getElementById('loginScreen') && 
+        !document.getElementById('loginScreen').classList.contains('hidden')) {
+        console.log('Fallback: Re-setting up password listeners');
+        setupPasswordListeners();
+    }
+}, 1000);
