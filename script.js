@@ -1,5 +1,48 @@
+// Password configuration
+const CORRECT_PASSWORD = "OSISJHS24BANDUNG";
+
 // Data absensi disimpan di localStorage
 let absensiData = JSON.parse(localStorage.getItem('absensiData')) || [];
+
+// Fungsi untuk mengecek password
+function checkPassword() {
+    const passwordInput = document.getElementById('password').value;
+    const errorElement = document.getElementById('passwordError');
+    
+    if (passwordInput === CORRECT_PASSWORD) {
+        // Password benar, tampilkan aplikasi utama
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+        localStorage.setItem('isLoggedIn', 'true');
+    } else {
+        // Password salah, tampilkan pesan error
+        errorElement.textContent = 'Password salah! Mau passwordnya? Tanya pemiliknya!';
+        document.getElementById('password').value = '';
+        document.getElementById('password').focus();
+        
+        // Tambah efek shake pada input
+        document.getElementById('password').classList.add('shake');
+        setTimeout(() => {
+            document.getElementById('password').classList.remove('shake');
+        }, 500);
+    }
+}
+
+// Fungsi untuk auto login jika sudah login sebelumnya
+function checkAutoLogin() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn');
+    if (isLoggedIn === 'true') {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+    }
+}
+
+// Event listener untuk enter key pada input password
+document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        checkPassword();
+    }
+});
 
 // Fungsi untuk update pilihan kelas berdasarkan tingkat
 function updateKelas() {
@@ -50,6 +93,23 @@ function cekStatus() {
     return now > batas ? 'Telat' : 'Tepat Waktu';
 }
 
+// Update statistik
+function updateStatistik() {
+    const hariIni = new Date().toDateString();
+    const dataHariIni = absensiData.filter(item => {
+        const itemDate = new Date(item.timestamp).toDateString();
+        return itemDate === hariIni;
+    });
+    
+    const total = dataHariIni.length;
+    const tepat = dataHariIni.filter(item => item.status === 'Tepat Waktu').length;
+    const telat = dataHariIni.filter(item => item.status === 'Telat').length;
+    
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statTepat').textContent = tepat;
+    document.getElementById('statTelat').textContent = telat;
+}
+
 // Simpan absensi
 function simpanAbsensi() {
     const nama = document.getElementById('nama').value.trim();
@@ -57,7 +117,7 @@ function simpanAbsensi() {
     const kelas = document.getElementById('kelas').value;
     
     if (!nama || !tingkat || !kelas) {
-        alert('Harap isi semua data!');
+        tampilkanNotifikasi('❌ Harap isi semua data!', 'error');
         return;
     }
     
@@ -87,10 +147,11 @@ function simpanAbsensi() {
     document.getElementById('tingkat').value = '';
     document.getElementById('kelas').innerHTML = '<option value="">Pilih Tingkat terlebih dahulu</option>';
     
-    // Update tabel
+    // Update tabel dan statistik
     tampilkanData();
+    updateStatistik();
     
-    alert(`Absensi berhasil disimpan!\nStatus: ${status}`);
+    tampilkanNotifikasi(`Absensi ${nama} berhasil disimpan!`);
 }
 
 // Tampilkan data di tabel
@@ -107,8 +168,8 @@ function tampilkanData() {
             <td>${item.nama}</td>
             <td>${item.kelas}</td>
             <td>${item.waktu}</td>
-            <td style="color: ${item.status === 'Telat' ? '#c62828' : '#2e7d32'}; font-weight: bold;">
-                ${item.status}
+            <td style="color: ${item.status === 'Telat' ? '#DC2626' : '#059669'}; font-weight: bold;">
+                ${item.status === 'Telat' ? '' : ''} ${item.status}
             </td>
         `;
         tbody.appendChild(row);
@@ -121,8 +182,9 @@ function resetData() {
         absensiData = [];
         localStorage.removeItem('absensiData');
         tampilkanData();
+        updateStatistik();
         document.getElementById('statusInfo').textContent = '';
-        alert('Semua data telah dihapus!');
+        tampilkanNotifikasi(' Semua data telah dihapus!');
     }
 }
 
@@ -132,7 +194,7 @@ function formatData() {
         return "Tidak ada data absensi.";
     }
     
-    let teks = "Assalamualaikum siap ka/teh pagi, siap ka/teh izin kirim yang telat masuk sekolah\n\n";
+    let teks = "Siap ka/teh izin kirim list yang telat: tnggl/bln/thn\n\n";
     
     // Kelompokkan data berdasarkan kelas
     const dataPerKelas = {};
@@ -159,10 +221,10 @@ function formatData() {
     const totalTelat = absensiData.filter(item => item.status === 'Telat').length;
     const totalTepat = absensiData.filter(item => item.status === 'Tepat Waktu').length;
     
-    teks += `Total yang telat:\n`;
-    teks += `Yang Terlambat: ${totalTelat} siswa\n`;
-    teks += `Total Yang Terlambat: ${absensiData.length} siswa\n\n`;
-    teks += `*Absensi dibuat pada: ${new Date().toLocaleString('id-ID')}*`;
+    teks += `📈 STATISTIK:\n`;
+    teks += `: ${totalTepat} siswa\n`;
+    teks += `: ${totalTelat} siswa\n`;
+    teks += `📊 Total: ${absensiData.length} siswa\n\n`;
     
     return teks;
 }
@@ -173,7 +235,7 @@ function salinData() {
     
     // Salin ke clipboard
     navigator.clipboard.writeText(teks).then(() => {
-        tampilkanNotifikasi('Absensi berhasil di salin!');
+        tampilkanNotifikasi('Data berhasil disalin ke clipboard!');
     }).catch(err => {
         // Fallback untuk browser yang tidak support clipboard API
         const textArea = document.createElement('textarea');
@@ -182,7 +244,7 @@ function salinData() {
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        tampilkanNotifikasi('✅ Data berhasil disalin ke clipboard!');
+        tampilkanNotifikasi('Data berhasil disalin ke clipboard!');
     });
 }
 
@@ -201,9 +263,17 @@ function kirimWhatsApp() {
 }
 
 // Tampilkan notifikasi
-function tampilkanNotifikasi(pesan) {
+function tampilkanNotifikasi(pesan, tipe = 'success') {
     const notifikasi = document.getElementById('notification');
     notifikasi.textContent = pesan;
+    
+    // Warna berdasarkan tipe
+    if (tipe === 'error') {
+        notifikasi.style.background = '#EF4444';
+    } else {
+        notifikasi.style.background = '#10B981';
+    }
+    
     notifikasi.classList.add('show');
     
     setTimeout(() => {
@@ -213,10 +283,36 @@ function tampilkanNotifikasi(pesan) {
 
 // Inisialisasi
 document.addEventListener('DOMContentLoaded', function() {
+    // Cek auto login terlebih dahulu
+    checkAutoLogin();
+    
     updateWaktu();
     setInterval(updateWaktu, 1000);
     tampilkanData();
+    updateStatistik();
     
     // Set batas waktu default ke 07:00
     document.getElementById('batasWaktu').value = '07:00';
+    
+    // Auto-focus ke input nama (hanya jika sudah login)
+    if (localStorage.getItem('isLoggedIn') === 'true') {
+        document.getElementById('nama').focus();
+    } else {
+        document.getElementById('password').focus();
+    }
 });
+
+// Tambahkan style untuk efek shake
+const style = document.createElement('style');
+style.textContent = `
+    .shake {
+        animation: shake 0.5s ease-in-out;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+`;
+document.head.appendChild(style);
