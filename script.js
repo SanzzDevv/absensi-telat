@@ -66,7 +66,7 @@ function simpanAbsensi() {
     }
 
     if (!kelas) {
-        tampilkanNotifikasi('Format: Nama Kelas (contoh: Andi 7A)');
+        tampilkanNotifikasi('Format: Nama Kelas (contoh: Ahmad 8F)');
         return;
     }
 
@@ -133,7 +133,7 @@ function resetData() {
 function formatData() {
     if (absensiData.length === 0) return 'Belum ada data absensi.';
     
-    let teks = '📊 ABSENSI KETERLAMBATAN\n\n';
+    let teks = 'ABSENSI KETERLAMBATAN SISWA\n\n';
     
     // Kelompokkan per kelas
     const perKelas = {};
@@ -154,7 +154,6 @@ function formatData() {
     const tepat = absensiData.filter(item => item.status === 'Tepat Waktu').length;
     
     teks += `📈 STATISTIK:\n`;
-    teks += `✅ Tepat: ${tepat}\n`;
     teks += `🔴 Telat: ${telat}\n`;
     teks += `📊 Total: ${absensiData.length}\n\n`;
     teks += `Waktu: ${new Date().toLocaleString('id-ID')}`;
