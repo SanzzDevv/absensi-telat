@@ -3,116 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Absensi Keterlambatan Siswa</title>
+    <title>Absensi Telat</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <!-- Login Screen -->
-    <div id="loginScreen" class="login-container">
-        <div class="login-box">
-            <div class="login-header">
-                <h1>🔒 AKSES ABSENSI</h1>
-                <p>Keterlambatan Siswa</p>
-            </div>
-            <div class="form-group">
-                <label for="password">Masukkan Password:</label>
-                <input type="password" id="password" placeholder="Ketik password di sini...">
-                <div id="passwordError" class="error-message"></div>
-            </div>
-            <button class="btn btn-primary" onclick="checkPassword()">🔑 Masuk ke Web</button>
-            <div class="login-hint">
-                <p>Lupa password? Hubungi pemilik sistem (087812029190)</p>
-            </div>
+    <div id="loginScreen" class="container login-box">
+        <h1>🔐 ABSENSI TELAT</h1>
+        <input type="password" id="password" placeholder="Password" autofocus>
+        <div id="error" class="error"></div>
+        <button onclick="checkPassword()">MASUK</button>
+        <p style="margin-top: 15px; font-size: 12px; color: #666;">
+            Lupa password? Tanya pemilik
+        </p>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="container main-app">
+        <h1>📝 ABSENSI TELAT</h1>
+        
+        <div class="time" id="currentTime">Waktu: ...</div>
+        
+        <div class="input-group">
+            <input type="text" id="inputData" placeholder="Nama Kelas (contoh: Andi 7A)" autofocus>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-save" onclick="simpanAbsensi()">SIMPAN</button>
+            <button class="btn-reset" onclick="resetData()">RESET</button>
+        </div>
+        
+        <div class="buttons">
+            <button class="btn-copy" onclick="salinData()">SALIN DATA</button>
+            <button class="btn-wa" onclick="kirimWhatsApp()">KIRIM WA</button>
+        </div>
+        
+        <div id="status" class="status"></div>
+        
+        <div class="data-list" id="dataList">
+            <!-- Data akan muncul di sini -->
         </div>
     </div>
 
-    <!-- Main Application (Hidden until login) -->
-    <div id="mainApp" class="main-app hidden">
-        <div class="container floating">
-            <h1>Absensi Keterlambatan Siswa</h1>
-            
-            <!-- Stats Cards -->
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-label">Total Hari Ini</div>
-                    <div class="stat-number" id="statTotal">0</div>
-                    <div class="stat-label">Siswa</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Tepat Waktu (tidak dibutuhkan)</div>
-                    <div class="stat-number" id="statTepat">0</div>
-                    <div class="stat-label">Siswa</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Terlambat</div>
-                    <div class="stat-number" id="statTelat">0</div>
-                    <div class="stat-label">Siswa</div>
-                </div>
-            </div>
-            
-            <div class="current-time" id="currentTime">
-                Waktu Sekarang: ...
-            </div>
-            
-            <div class="form-group">
-                <label for="nama">Nama Siswa:</label>
-                <input type="text" id="nama" placeholder="Masukkan Nama Siswa">
-            </div>
-            
-            <div class="form-group">
-                <label for="tingkat">Pilih Tingkat Kelas:</label>
-                <select id="tingkat" onchange="updateKelas()">
-                    <option value="">Pilih Tingkat</option>
-                    <option value="7">Kelas 7</option>
-                    <option value="8">Kelas 8</option>
-                    <option value="9">Kelas 9</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="kelas">Pilih Kelas:</label>
-                <select id="kelas">
-                    <option value="">Pilih Tingkat terlebih dahulu</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label>Batas Waktu Masuk:</label>
-                <input type="time" id="batasWaktu" value="07:00">
-            </div>
-            
-            <button class="btn btn-primary" onclick="simpanAbsensi()"> Simpan Absensi</button>
-            <button class="btn btn-danger" onclick="resetData()"> Reset Semua Data</button>
-            
-            <div id="statusInfo" class="status-indicator"></div>
-            
-            <div class="action-buttons">
-                <button class="btn btn-success" onclick="salinData()"> Salin Teks</button>
-                <button class="btn btn-whatsapp" onclick="kirimWhatsApp()"> Kirim via WhatsApp</button>
-            </div>
-            
-            <h2 style="margin-top: 30px; display: flex; align-items: center; gap: 8px;">
-                <span>📋</span> Daftar Absensi
-            </h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nama</th>
-                        <th>Kelas</th>
-                        <th>Waktu</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="tabelAbsensi">
-                    <!-- Data akan diisi oleh JavaScript -->
-                </tbody>
-            </table>
-        </div>
-
-        <div id="notification" class="notification">
-            Data berhasil disalin ke clipboard!
-        </div>
-    </div>
+    <div id="notification" class="notification"></div>
 
     <script src="script.js"></script>
 </body>

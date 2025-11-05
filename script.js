@@ -1,406 +1,200 @@
-// Password configuration
-const CORRECT_PASSWORD = "OSISJHS24BANDUNG";
-
-// Data absensi disimpan di localStorage
+// Password
+const PASSWORD = "OSISJHS24BANDUNG";
 let absensiData = JSON.parse(localStorage.getItem('absensiData')) || [];
 
-// Fungsi untuk mengecek password - FIXED VERSION
+// Fungsi login
 function checkPassword() {
-    console.log('checkPassword function called'); // Debug log
-    const passwordInput = document.getElementById('password');
-    const errorElement = document.getElementById('passwordError');
+    const password = document.getElementById('password').value;
+    const error = document.getElementById('error');
     
-    if (!passwordInput) {
-        console.error('Password input not found!');
-        return;
-    }
-    
-    const passwordValue = passwordInput.value;
-    console.log('Password entered:', passwordValue); // Debug log
-    
-    if (passwordValue === CORRECT_PASSWORD) {
-        console.log('Password correct!'); // Debug log
-        // Password benar, tampilkan aplikasi utama
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
+    if (password === PASSWORD) {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
         localStorage.setItem('isLoggedIn', 'true');
-        tampilkanNotifikasi('Login berhasil!');
+        document.getElementById('inputData').focus();
     } else {
-        console.log('Password incorrect!'); // Debug log
-        // Password salah, tampilkan pesan error
-        errorElement.textContent = 'Password salah! Mau passwordnya? Tanya pemiliknya!';
-        passwordInput.value = '';
-        passwordInput.focus();
-        
-        // Tambah efek shake pada input
-        passwordInput.classList.add('shake');
-        setTimeout(() => {
-            passwordInput.classList.remove('shake');
-        }, 500);
+        error.textContent = 'Password salah!';
+        document.getElementById('password').value = '';
     }
 }
 
-// Event listener yang lebih robust untuk password
-function setupPasswordListeners() {
-    const passwordInput = document.getElementById('password');
-    const loginBtn = document.querySelector('.btn-primary');
-    
-    console.log('Setting up password listeners...'); // Debug log
-    
-    if (passwordInput) {
-        // Enter key listener
-        passwordInput.addEventListener('keypress', function(e) {
-            console.log('Key pressed:', e.key); // Debug log
-            if (e.key === 'Enter') {
-                console.log('Enter key pressed, calling checkPassword'); // Debug log
-                checkPassword();
-            }
-        });
-        
-        // Pastikan input bisa difocus
-        passwordInput.focus();
-    } else {
-        console.error('Password input element not found!');
-    }
-    
-    if (loginBtn) {
-        // Click listener untuk tombol login
-        loginBtn.addEventListener('click', function(e) {
-            console.log('Login button clicked'); // Debug log
-            e.preventDefault();
-            checkPassword();
-        });
-    } else {
-        console.error('Login button not found!');
-    }
+// Auto login
+if (localStorage.getItem('isLoggedIn') === 'true') {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainApp').style.display = 'block';
 }
 
-// Fungsi untuk auto login jika sudah login sebelumnya
-function checkAutoLogin() {
-    const isLoggedIn = localStorage.getItem('isLoggedIn');
-    console.log('Auto login check:', isLoggedIn); // Debug log
-    
-    if (isLoggedIn === 'true') {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
-        console.log('Auto login successful'); // Debug log
-    }
-}
-
-// Fungsi untuk update pilihan kelas berdasarkan tingkat
-function updateKelas() {
-    const tingkat = document.getElementById('tingkat').value;
-    const kelasSelect = document.getElementById('kelas');
-    
-    // Kosongkan pilihan kelas
-    kelasSelect.innerHTML = '<option value="">Pilih Kelas</option>';
-    
-    if (tingkat) {
-        // Tambahkan kelas A sampai I untuk tingkat yang dipilih
-        for (let i = 'A'.charCodeAt(0); i <= 'I'.charCodeAt(0); i++) {
-            const kelas = String.fromCharCode(i);
-            const option = document.createElement('option');
-            option.value = `${tingkat}${kelas}`;
-            option.textContent = `${tingkat}${kelas}`;
-            kelasSelect.appendChild(option);
-        }
-    }
-}
-
-// Update waktu real-time
+// Update waktu
 function updateWaktu() {
     const now = new Date();
-    const options = { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit'
-    };
-    
-    const currentTimeElement = document.getElementById('currentTime');
-    if (currentTimeElement) {
-        currentTimeElement.textContent = 
-            `Waktu Sekarang: ${now.toLocaleDateString('id-ID', options)}`;
-    }
+    document.getElementById('currentTime').textContent = 
+        'Waktu: ' + now.toLocaleString('id-ID');
 }
+setInterval(updateWaktu, 1000);
+updateWaktu();
 
-// Cek status keterlambatan
+// Cek status telat
 function cekStatus() {
     const now = new Date();
-    const batasWaktuInput = document.getElementById('batasWaktu');
+    const jam = now.getHours();
+    const menit = now.getMinutes();
     
-    if (!batasWaktuInput) return 'Tepat Waktu';
-    
-    const batasWaktu = batasWaktuInput.value;
-    
-    // Buat objek Date untuk batas waktu hari ini
-    const [jam, menit] = batasWaktu.split(':');
-    const batas = new Date();
-    batas.setHours(parseInt(jam), parseInt(menit), 0, 0);
-    
-    return now > batas ? 'Telat' : 'Tepat Waktu';
-}
-
-// Update statistik
-function updateStatistik() {
-    const hariIni = new Date().toDateString();
-    const dataHariIni = absensiData.filter(item => {
-        const itemDate = new Date(item.timestamp).toDateString();
-        return itemDate === hariIni;
-    });
-    
-    const total = dataHariIni.length;
-    const tepat = dataHariIni.filter(item => item.status === 'Tepat Waktu').length;
-    const telat = dataHariIni.filter(item => item.status === 'Telat').length;
-    
-    // Update elements dengan pengecekan null
-    const statTotal = document.getElementById('statTotal');
-    const statTepat = document.getElementById('statTepat');
-    const statTelat = document.getElementById('statTelat');
-    
-    if (statTotal) statTotal.textContent = total;
-    if (statTepat) statTepat.textContent = tepat;
-    if (statTelat) statTelat.textContent = telat;
+    // Batas waktu jam 7:00
+    return (jam > 7 || (jam === 7 && menit > 0)) ? 'Telat' : 'Tepat Waktu';
 }
 
 // Simpan absensi
 function simpanAbsensi() {
-    const nama = document.getElementById('nama')?.value.trim();
-    const tingkat = document.getElementById('tingkat')?.value;
-    const kelas = document.getElementById('kelas')?.value;
-    
-    if (!nama || !tingkat || !kelas) {
-        tampilkanNotifikasi('❌ Harap isi semua data!', 'error');
+    const input = document.getElementById('inputData').value.trim();
+    if (!input) {
+        tampilkanNotifikasi('Isi nama dan kelas!');
         return;
     }
+
+    // Pisahkan nama dan kelas (ambil angka dan huruf terakhir sebagai kelas)
+    const parts = input.split(' ');
+    let nama = input;
+    let kelas = '';
     
-    const sekarang = new Date();
-    const waktu = sekarang.toLocaleString('id-ID');
+    // Cari bagian yang mengandung kelas (angka + huruf)
+    for (let i = parts.length - 1; i >= 0; i--) {
+        if (/^[7-9][A-I]$/i.test(parts[i])) {
+            kelas = parts[i].toUpperCase();
+            nama = parts.slice(0, i).join(' ');
+            break;
+        }
+    }
+
+    if (!kelas) {
+        tampilkanNotifikasi('Format: Nama Kelas (contoh: Andi 7A)');
+        return;
+    }
+
+    const waktu = new Date().toLocaleString('id-ID');
     const status = cekStatus();
-    
-    // Tambah ke data
-    const absensi = {
+
+    // Simpan data
+    absensiData.unshift({
         nama: nama,
         kelas: kelas,
         waktu: waktu,
-        status: status,
-        timestamp: sekarang.getTime()
-    };
-    
-    absensiData.push(absensi);
+        status: status
+    });
+
     localStorage.setItem('absensiData', JSON.stringify(absensiData));
-    
+
+    // Reset input dan fokus kembali
+    document.getElementById('inputData').value = '';
+    document.getElementById('inputData').focus();
+
     // Tampilkan status
-    const statusElement = document.getElementById('statusInfo');
-    if (statusElement) {
-        statusElement.textContent = `Siswa ${nama} - Status: ${status}`;
-        statusElement.className = `status-indicator ${status === 'Telat' ? 'status-telat' : 'status-tepat'}`;
-    }
-    
-    // Reset form
-    document.getElementById('nama').value = '';
-    document.getElementById('tingkat').value = '';
-    const kelasSelect = document.getElementById('kelas');
-    if (kelasSelect) {
-        kelasSelect.innerHTML = '<option value="">Pilih Tingkat terlebih dahulu</option>';
-    }
-    
-    // Update tabel dan statistik
+    const statusElement = document.getElementById('status');
+    statusElement.textContent = `${nama} (${kelas}) - ${status}`;
+    statusElement.className = `status ${status === 'Telat' ? 'status-telat' : 'status-tepat'}`;
+
+    // Update tampilan
     tampilkanData();
-    updateStatistik();
-    
-    tampilkanNotifikasi(`✅ Absensi ${nama} berhasil disimpan!`);
+    tampilkanNotifikasi(`✅ ${nama} (${kelas}) - ${status}`);
 }
 
-// Tampilkan data di tabel
+// Tampilkan data
 function tampilkanData() {
-    const tbody = document.getElementById('tabelAbsensi');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    
-    // Urutkan berdasarkan waktu terbaru
-    const dataTerurut = [...absensiData].sort((a, b) => b.timestamp - a.timestamp);
-    
-    dataTerurut.forEach(item => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${item.nama}</td>
-            <td>${item.kelas}</td>
-            <td>${item.waktu}</td>
-            <td style="color: ${item.status === 'Telat' ? '#DC2626' : '#059669'}; font-weight: bold;">
-                ${item.status === 'Telat' ? '🔴' : '🟢'} ${item.status}
-            </td>
+    const dataList = document.getElementById('dataList');
+    dataList.innerHTML = '';
+
+    absensiData.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'data-item';
+        div.innerHTML = `
+            <div>
+                <strong>${item.nama}</strong> (${item.kelas})
+                <div style="font-size: 12px; color: #666;">${item.waktu}</div>
+            </div>
+            <div style="color: ${item.status === 'Telat' ? '#DC2626' : '#059669'}; font-weight: bold;">
+                ${item.status}
+            </div>
         `;
-        tbody.appendChild(row);
+        dataList.appendChild(div);
     });
 }
 
-// Reset semua data
+// Reset data
 function resetData() {
-    if (confirm('Apakah Anda yakin ingin menghapus semua data absensi?')) {
+    if (confirm('Hapus semua data?')) {
         absensiData = [];
         localStorage.removeItem('absensiData');
         tampilkanData();
-        updateStatistik();
-        const statusInfo = document.getElementById('statusInfo');
-        if (statusInfo) statusInfo.textContent = '';
-        tampilkanNotifikasi('🗑️ Semua data telah dihapus!');
+        document.getElementById('status').textContent = '';
+        tampilkanNotifikasi('Data direset');
     }
 }
 
 // Format data untuk dikirim
 function formatData() {
-    if (absensiData.length === 0) {
-        return "Tidak ada data absensi.";
-    }
+    if (absensiData.length === 0) return 'Belum ada data absensi.';
     
-    let teks = "Siap ka/teh izin mengirim list yang telat: (Tnggl/Bln/Thn)\n\n";
+    let teks = '📊 ABSENSI KETERLAMBATAN\n\n';
     
-    // Kelompokkan data berdasarkan kelas
-    const dataPerKelas = {};
+    // Kelompokkan per kelas
+    const perKelas = {};
     absensiData.forEach(item => {
-        if (!dataPerKelas[item.kelas]) {
-            dataPerKelas[item.kelas] = [];
-        }
-        dataPerKelas[item.kelas].push(item);
+        if (!perKelas[item.kelas]) perKelas[item.kelas] = [];
+        perKelas[item.kelas].push(item);
     });
-    
-    // Format per kelas
-    Object.keys(dataPerKelas).sort().forEach(kelas => {
-        teks += `📚 KELAS ${kelas}:\n`;
-        const dataKelas = dataPerKelas[kelas];
-        
-        dataKelas.forEach((item, index) => {
-            const statusIcon = item.status === 'Telat' ? '' : '';
-            teks += `${index + 1}. ${item.nama} - ${item.waktu} ${statusIcon} ${item.status}\n`;
+
+    Object.keys(perKelas).sort().forEach(kelas => {
+        teks += `📚 ${kelas}:\n`;
+        perKelas[kelas].forEach((item, i) => {
+            teks += `${i+1}. ${item.nama} - ${item.status}\n`;
         });
-        teks += "\n";
+        teks += '\n';
     });
-    
-    // Statistik
-    const totalTelat = absensiData.filter(item => item.status === 'Telat').length;
-    const totalTepat = absensiData.filter(item => item.status === 'Tepat Waktu').length;
+
+    const telat = absensiData.filter(item => item.status === 'Telat').length;
+    const tepat = absensiData.filter(item => item.status === 'Tepat Waktu').length;
     
     teks += `📈 STATISTIK:\n`;
-    teks += `Tepat Waktu: ${totalTepat} siswa\n`;
-    teks += `Terlambat: ${totalTelat} siswa\n`;
-    teks += `📊 Total: ${absensiData.length} siswa\n\n`;
-    teks += `*Data diambil pada: ${new Date().toLocaleString('id-ID')}*`;
-    
+    teks += `✅ Tepat: ${tepat}\n`;
+    teks += `🔴 Telat: ${telat}\n`;
+    teks += `📊 Total: ${absensiData.length}\n\n`;
+    teks += `Waktu: ${new Date().toLocaleString('id-ID')}`;
+
     return teks;
 }
 
-// Salin data ke clipboard
+// Salin data
 function salinData() {
     const teks = formatData();
-    
-    // Salin ke clipboard
     navigator.clipboard.writeText(teks).then(() => {
-        tampilkanNotifikasi('Data berhasil disalin ke clipboard!');
-    }).catch(err => {
-        // Fallback untuk browser yang tidak support clipboard API
-        const textArea = document.createElement('textarea');
-        textArea.value = teks;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        tampilkanNotifikasi('Data berhasil disalin ke clipboard!');
+        tampilkanNotifikasi('📋 Data disalin!');
     });
 }
 
-// Kirim via WhatsApp
+// Kirim WhatsApp
 function kirimWhatsApp() {
     const teks = formatData();
-    
-    // Encode teks untuk URL WhatsApp
-    const teksEncoded = encodeURIComponent(teks);
-    
-    // Buat link WhatsApp
-    const urlWhatsApp = `https://wa.me/?text=${teksEncoded}`;
-    
-    // Buka WhatsApp
-    window.open(urlWhatsApp, '_blank');
+    const url = `https://wa.me/?text=${encodeURIComponent(teks)}`;
+    window.open(url, '_blank');
 }
 
-// Tampilkan notifikasi
-function tampilkanNotifikasi(pesan, tipe = 'success') {
-    const notifikasi = document.getElementById('notification');
-    if (!notifikasi) return;
-    
-    notifikasi.textContent = pesan;
-    
-    // Warna berdasarkan tipe
-    if (tipe === 'error') {
-        notifikasi.style.background = '#EF4444';
-    } else {
-        notifikasi.style.background = '#10B981';
-    }
-    
-    notifikasi.classList.add('show');
-    
+// Notifikasi
+function tampilkanNotifikasi(pesan) {
+    const notif = document.getElementById('notification');
+    notif.textContent = pesan;
+    notif.style.display = 'block';
     setTimeout(() => {
-        notifikasi.classList.remove('show');
-    }, 3000);
+        notif.style.display = 'none';
+    }, 2000);
 }
 
-// Inisialisasi yang lebih robust
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM Content Loaded - Initializing app...'); // Debug log
-    
-    // Cek auto login terlebih dahulu
-    checkAutoLogin();
-    
-    // Setup password listeners
-    setupPasswordListeners();
-    
-    updateWaktu();
-    setInterval(updateWaktu, 1000);
-    tampilkanData();
-    updateStatistik();
-    
-    // Set batas waktu default ke 07:00
-    const batasWaktuInput = document.getElementById('batasWaktu');
-    if (batasWaktuInput) {
-        batasWaktuInput.value = '07:00';
-    }
-    
-    console.log('App initialization complete'); // Debug log
+// Enter untuk submit
+document.getElementById('inputData').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') simpanAbsensi();
 });
 
-// Tambahkan style untuk efek shake
-const style = document.createElement('style');
-style.textContent = `
-    .shake {
-        animation: shake 0.5s ease-in-out;
-    }
-    
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        75% { transform: translateX(5px); }
-    }
-    
-    /* Pastikan elemen login visible */
-    .login-container {
-        display: flex !important;
-    }
-    
-    .hidden {
-        display: none !important;
-    }
-`;
-document.head.appendChild(style);
+document.getElementById('password').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') checkPassword();
+});
 
-// Fallback: Jika semua gagal, coba setup ulang setelah 1 detik
-setTimeout(() => {
-    if (document.getElementById('loginScreen') && 
-        !document.getElementById('loginScreen').classList.contains('hidden')) {
-        console.log('Fallback: Re-setting up password listeners');
-        setupPasswordListeners();
-    }
-}, 1000);
+// Load data saat start
+tampilkanData();
