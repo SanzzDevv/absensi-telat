@@ -39,8 +39,8 @@ function cekStatus() {
     const jam = now.getHours();
     const menit = now.getMinutes();
     
-    // Batas waktu jam 7:00
-    return (jam > 7 || (jam === 7 && menit > 0)) ? 'Telat' : 'Tepat Waktu';
+    // Batas waktu jam 6.30
+    return (jam > 6 || (jam === 6 && menit > 0)) ? 'Telat' : 'Tepat Waktu';
 }
 
 // Simpan absensi
